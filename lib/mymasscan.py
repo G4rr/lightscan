@@ -106,24 +106,24 @@ def run_nc_command(ip, port):
     l.info(f"nc command result: {nc_runner.result}")
     return nc_runner.result
     
-def my_tcp_masscan(ip: str, ports: list, tcp_flag: str = "A", timeout: float = .4) -> dict:
+def my_tcp_masscan(ip: str, ports: list, tcp_flag: str = "A", timeout: float = .6) -> dict:
     results = {}
     _ip = IP(dst=ip)
-    l.info(f"Scanning {ip} for open ports")
+    l.info(f"MyMasscan Scanning {ip} for open ports")
     for port in ports:
         #if isinstance(port, str):
         port = port.strip()
         int_port = int(port)
-        l.info(f"Scanning {ip}:{port}")
+        l.info(f"MyMasscan Scanning {ip}:{port}")
         _tcp = TCP(sport=RandShort(), dport=int_port, flags=tcp_flag) # flags="A" for ACK scan
         pkt = _ip/_tcp
         resp = sr1(pkt, timeout=timeout)
 
         if resp:
-            l.info(f"{ip}:{port} is open by ACK scan")
+            l.info(f"{ip}:{port} is open for ACK scan")
             result = run_nc_command(ip, port)
             if result == "Opened":
-                l.info(f"{ip}:{port} is open by nc check")
+                l.info(f"{ip}:{port} is open for nc check")
                 results[port] = {
                     "tcp": {}
                 }
@@ -131,7 +131,7 @@ def my_tcp_masscan(ip: str, ports: list, tcp_flag: str = "A", timeout: float = .
                                     "protocol": "tcp",                  
                                     "last_detected": datetime.strftime(datetime.now(), "%Y-%m-%d:%H-%M-%S")}
             else:
-                l.info(f"{ip}:{port} is closed by nc check")
+                l.info(f"{ip}:{port} is closed for nc check")
                 continue
         else:
             l.info(f"{ip}:{port} is closed")

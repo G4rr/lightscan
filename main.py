@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Purpose: A simple scanner
+# Purpose: Light scanner
 
 import os
 import json
@@ -96,6 +96,7 @@ def domain_scanner(domains: list, ports: list, init_file: str = None):
             l.info(f"Writing results to new_results.json")
             json.dump(results, file, indent=4)
     
+    if s.NMAP_SCRIPTS_SCANNER:
         # Run nmap scripts for each IP/Service
         l.info(f"Running Nmap scripts for each IP/Service")
         for domain in results:
@@ -112,23 +113,57 @@ def domain_scanner(domains: list, ports: list, init_file: str = None):
                 else:
                     l.info(f"{ip} is not filtered. Skipping...")
                     continue
+    else:
+        print(f"DEBUG: Nmap scripts scanning is disabled. Skipping...")
     
-    # Run Web scanning
-    for domain in results:
-        for ip in results[domain]["ips_info"]:
-            if results[domain]["ips_info"][ip]["status"] == "open":
-                if "ports" not in results[domain]["ips_info"][ip]:
+    if s.WHATWEB_SCANNER:
+        # Run Web scanning
+        for domain in results:
+            for ip in results[domain]["ips_info"]:
+                if results[domain]["ips_info"][ip]["status"] == "open":
+                    if "ports" not in results[domain]["ips_info"][ip]:
+                        continue
+                    _ip = ip.strip()
+                    myweb.mywhatweb(ip, results[domain]["ips_info"][ip])
+                else:
+                    l.info(f"{ip} is not filtered. Skipping...")
                     continue
-                _ip = ip.strip()
-                #myweb.mywhatweb(ip, results[domain]["ips_info"][ip])
-                myweb.myffuf(ip, results[domain]["ips_info"][ip])
-                myweb.my_nikto(ip, results[domain]["ips_info"][ip])
-            else:
-                l.info(f"{ip} is not filtered. Skipping...")
-                continue
+    else:
+        print(f"DEBUG: WhatWeb scanning is disabled. Skipping...")
+    
+    if s.NIKTO_SCANNER:
+        # Run Web scanning
+        for domain in results:
+            for ip in results[domain]["ips_info"]:
+                if results[domain]["ips_info"][ip]["status"] == "open":
+                    if "ports" not in results[domain]["ips_info"][ip]:
+                        continue
+                    _ip = ip.strip()
+                    myweb.my_nikto(ip, results[domain]["ips_info"][ip])
+                else:
+                    l.info(f"{ip} is not filtered. Skipping...")
+                    continue
+    else:
+        print(f"DEBUG: Nikto scanning is disabled. Skipping...")
+    
+    if s.FFUF_SCANNER:
+        # Run Web scanning
+        for domain in results:
+            for ip in results[domain]["ips_info"]:
+                if results[domain]["ips_info"][ip]["status"] == "open":
+                    if "ports" not in results[domain]["ips_info"][ip]:
+                        continue
+                    _ip = ip.strip()
+                    myweb.myffuf(ip, results[domain]["ips_info"][ip])
+                else:
+                    l.info(f"{ip} is not filtered. Skipping...")
+                    continue
+    else:
+        print(f"DEBUG: FFUF scanning is disabled. Skipping...")
+
 
     
-def ip_scanner(ips: list, ports: list):
+def ip_scanner(ips: list, ports: list, init_file: str = None):
     results = {}
     for ip in ips:
         ip = ip.strip()
@@ -179,65 +214,65 @@ def ip_scanner(ips: list, ports: list):
             l.info(f"Writing results to new_ips_results.json")
             json.dump(results, file, indent=4)
     
-        # Run nmap scripts for each IP/Service
-        if s.NMAP_SCRIPTS_SCANNER: 
-            l.info(f"Running Nmap scripts for each IP/Service")
-            for ip in results:
-                for ip in results[ip]["ips_info"]:
-                    if results[ip]["ips_info"][ip]["status"] == "open":
-                        _ip = ip.strip()
-                        if "ports" not in results[ip]["ips_info"][ip]:
-                            continue
-                        for port in results[ip]["ips_info"][ip]["ports"]:
-                            _port = port.strip()
-                            tcp_service = results[ip]["ips_info"][ip]["ports"][port]["tcp"]["service"]
-                            print(f"DEBUG: Running Nmap scripts for {_ip}:{_port} ({tcp_service})")
-                            mynmap.run_nmap_scripts(_ip, _port, tcp_service)
-                    else:
-                        l.info(f"{ip} is not filtered. Skipping...")
-                        continue
-        else:
-            print(f"DEBUG: Nmap scripts scanning is disabled. Skipping...")
-        
-        # Run Web scanning
-        if s.WHATWEB_SCANNER:
-            for ip in results:
+    # Run nmap scripts for each IP/Service
+    if s.NMAP_SCRIPTS_SCANNER: 
+        l.info(f"Running Nmap scripts for each IP/Service")
+        for ip in results:
+            for ip in results[ip]["ips_info"]:
                 if results[ip]["ips_info"][ip]["status"] == "open":
+                    _ip = ip.strip()
                     if "ports" not in results[ip]["ips_info"][ip]:
                         continue
-                    _ip = ip.strip()
-                    myweb.mywhatweb(ip, results[ip]["ips_info"][ip])
+                    for port in results[ip]["ips_info"][ip]["ports"]:
+                        _port = port.strip()
+                        tcp_service = results[ip]["ips_info"][ip]["ports"][port]["tcp"]["service"]
+                        print(f"DEBUG: Running Nmap scripts for {_ip}:{_port} ({tcp_service})")
+                        mynmap.run_nmap_scripts(_ip, _port, tcp_service)
                 else:
                     l.info(f"{ip} is not filtered. Skipping...")
                     continue
-        else:
-            print(f"DEBUG: WhatWeb scanning is disabled. Skipping...")
-        
-        if s.NIKTO_SCANNER:
-            for ip in results:
-                if results[ip]["ips_info"][ip]["status"] == "open":
-                    if "ports" not in results[ip]["ips_info"][ip]:
-                        continue
-                    _ip = ip.strip()
-                    myweb.my_nikto(ip, results[ip]["ips_info"][ip])
-                else:
-                    l.info(f"{ip} is not filtered. Skipping...")
+    else:
+        print(f"DEBUG: Nmap scripts scanning is disabled. Skipping...")
+    
+    # Run Web scanning
+    if s.WHATWEB_SCANNER:
+        for ip in results:
+            if results[ip]["ips_info"][ip]["status"] == "open":
+                if "ports" not in results[ip]["ips_info"][ip]:
                     continue
-        else:
-            print(f"DEBUG: Nikto scanning is disabled. Skipping...")
+                _ip = ip.strip()
+                myweb.mywhatweb(ip, results[ip]["ips_info"][ip])
+            else:
+                l.info(f"{ip} is not filtered. Skipping...")
+                continue
+    else:
+        print(f"DEBUG: WhatWeb scanning is disabled. Skipping...")
+    
+    if s.NIKTO_SCANNER:
+        for ip in results:
+            if results[ip]["ips_info"][ip]["status"] == "open":
+                if "ports" not in results[ip]["ips_info"][ip]:
+                    continue
+                _ip = ip.strip()
+                myweb.my_nikto(ip, results[ip]["ips_info"][ip])
+            else:
+                l.info(f"{ip} is not filtered. Skipping...")
+                continue
+    else:
+        print(f"DEBUG: Nikto scanning is disabled. Skipping...")
 
-        if s.FFUF_SCANNER:
-            for ip in results:
-                if results[ip]["ips_info"][ip]["status"] == "open":
-                    if "ports" not in results[ip]["ips_info"][ip]:
-                        continue
-                    _ip = ip.strip()
-                    myweb.myffuf(ip, results[ip]["ips_info"][ip])
-                else:
-                    l.info(f"{ip} is not filtered. Skipping...")
+    if s.FFUF_SCANNER:
+        for ip in results:
+            if results[ip]["ips_info"][ip]["status"] == "open":
+                if "ports" not in results[ip]["ips_info"][ip]:
                     continue
-        else:
-            print(f"DEBUG: FFUF scanning is disabled. Skipping...")
+                _ip = ip.strip()
+                myweb.myffuf(ip, results[ip]["ips_info"][ip])
+            else:
+                l.info(f"{ip} is not filtered. Skipping...")
+                continue
+    else:
+        print(f"DEBUG: FFUF scanning is disabled. Skipping...")
                         
 
 def print_preview(host_list: list):
@@ -313,7 +348,7 @@ if __name__ == "__main__":
         domain_scanner(domains, ports, init_file)
     elif ip_file:
         print_preview(ips)
-        ip_scanner(ips, ports)
+        ip_scanner(ips, ports, init_file)
     else:
         print("ERROR: Please provide a domain file or an IP file.")
         sys.exit(1)
